@@ -1,0 +1,133 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Ariel Shared Wallet</title>
+
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="jquery.ui.touch-punch.min.js"></script>
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/themes/smoothness/jquery-ui.css"/>
+    <link rel="stylesheet" href="styles.css"/>
+    <link rel="stylesheet" href="ariel.css"/>
+    
+
+    <script type="text/javascript" src="md5.js"></script>
+    <script type="text/javascript" src="SharedWallet.js"></script>
+
+    <script type="text/javascript">
+        $(function () {
+
+            // Create shared wallet and populate
+            var rootURL = "http://sharedwalletdemo.arielcommunications.co.uk";
+            //var rootURL = "http://192.168.0.10:81";
+            var sharedWallet = new Ariel.sharedWallet.SharedWallet($('.sharedwallet'), rootURL);
+
+
+
+            // Add handler for style switch
+            var currentStyle = 0;
+            var styles = ["ariel.css", "etx.css"];
+            $('.styleswitch').click(function () {
+                currentStyle = (currentStyle + 1) % styles.length;
+                $("head").append("<link rel='stylesheet' type='text/css' href='" + styles[currentStyle] + "'>");
+            });
+
+            $('.createaccount').click(function () {
+                // Call Shared Wallet API
+                var newaccount = { Username: "BobWang", HashedPassword: "5f4dcc3b5aa765d61d8327deb882cf99" };
+                $.ajax({
+                    url: rootURL + "/Account/Add",
+                    type: "POST",
+                    data: newaccount,
+                    dataType: "json",
+                    success: function (data) {
+                        alert(data);
+                    }
+                });
+            });
+
+            // Add handler for demo mode
+            $('.logon .toolbar .button.logondemomode').click(function () {
+                var data = {
+                    username: 'sharedwalletuser1',
+                    UnallocatedFunds: 4000,
+                    Currency: 'GBP',
+                    Platforms: [
+                    {
+                        Name: 'iTrade',
+                        Currency: 'GBP',
+                        Currencies:
+			[
+				{ Currency: 'GBP', ReservedFunds: 1420, AvailableFunds: 4780 }
+			]
+                    },
+                    {
+                        Name: 'MT4',
+                        Currency: 'USD',
+                        Currencies:
+			[
+				{ Currency: 'USD', ReservedFunds: 1540, AvailableFunds: 260 }
+			]
+                    },
+                    {
+                        Name: 'Binary',
+                        Currency: 'GBP',
+                        Currencies:
+			[
+				{ Currency: 'GBP', ReservedFunds: 0, AvailableFunds: 1000 }
+			]
+                    }
+                ],
+                    ExchangeRates:
+                    { 'GBPUSD': 1.6
+                    },
+                    PaymentProviders: [
+                ]
+                };
+                sharedWallet.constructUI(data);
+            });
+
+            // Add handler for logon
+            $('.logon .toolbar .button.logonbutton').click(function () {
+                // Call Shared Wallet API
+                var username = $('.logon .username .value input').val();
+                var password = $('.logon .password .value input').val();
+
+                var logondetails = { Username: username, HashedPassword: hex_md5(password) };
+                $.ajax({
+                    url: rootURL + "/account/Authenticate",
+                    type: "POST",
+                    data: logondetails,
+                    dataType: "json",
+                    success: function (data) {
+                        // If we sucessfully logged on, then load the UI with the platform accounts
+                        sharedWallet.setCredentials(username, password);
+                        sharedWallet.constructUI(data);
+                    }
+                });
+            });
+
+
+            $('.logon .toolbar .button.logondemomode').click();
+        });
+    </script>
+</head>
+<body>
+    <div class="sharedwallet" style="">
+    </div>
+    <div class="button createaccount" style="display:none; ">CREATE ACCOUNT</div>
+    <div class="button styleswitch" style="display:none; ">SWITCH BRAND</div>
+
+    <div class="logon">
+        <form>
+            <div class="username"><div class="label">Username</div><div class="value"><input id="txtUsername" value="BobWang" /></div></div>
+            <div class="password"><div class="label">Password</div><div class="value"><input id="txtPassword" value="password" type="password"/></div></div>
+        </form>
+        <div class="toolbar">
+            <div class="button logondemomode">DEMO MODE</div>
+            <div class="button logonbutton">LOGON</div>
+        </div>
+    </div>
+</body>
+</html>
